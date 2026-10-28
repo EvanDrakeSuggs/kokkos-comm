@@ -40,12 +40,14 @@ namespace stream {
     void block(){
       MPIS_Enqueue_startall( _my_queue, requests.size(), &requests[0]);
       MPIS_Enqueue_waitall( _my_queue);
+      MPIS_Queue_wait( _my_queue );
     }
 
     void block(int num_of_reqs, MPIS_Request reqs[]){
       MPIS_Matchall(num_of_reqs, &reqs[0], MPI_STATUS_IGNORE);
       MPIS_Enqueue_startall( _my_queue, num_of_reqs, &reqs[0]);
       MPIS_Enqueue_waitall( _my_queue);
+      MPIS_Queue_wait( _my_queue);
     }
     
     StreamContext()//const ExecutionSpace& exec_space)

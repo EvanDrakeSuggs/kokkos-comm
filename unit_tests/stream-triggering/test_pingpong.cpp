@@ -1,3 +1,4 @@
+
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 // SPDX-FileCopyrightText: Copyright Contributors to the Kokkos project
 
@@ -60,6 +61,7 @@ void pingpong_comm_mode_1d_contig() {
   
   MPIS_Enqueue_startall( ctx.get_queue(), 2, my_reqs );
   MPIS_Enqueue_waitall(ctx.get_queue());
+  MPIS_Queue_wait( ctx.get_queue() );
   std::cerr << " after start all" << std::endl;
 
   if( 1 == rank) {
