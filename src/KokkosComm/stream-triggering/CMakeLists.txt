@@ -9,7 +9,7 @@ target_sources(
         # Objects
         stream_space.hpp
         #communicator.hpp
-        #request.hpp
+        request.hpp
         comm_mode.hpp
         # Point-to-point
         send.hpp
@@ -26,6 +26,7 @@ target_sources(
         #scan.hpp
         #barrier.hpp
 	context.hpp
+	stream_channel.hpp
     # Implementation detail MPI headers
     FILE_SET HEADERS
       BASE_DIRS ${PROJECT_SOURCE_DIR}/src

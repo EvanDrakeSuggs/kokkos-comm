@@ -236,4 +236,11 @@ if(KokkosComm_ENABLE_MPI_ADVANCE)
     FILES test_main.cpp stream-triggering/test_pingpong.cpp
     LIBRARIES KokkosComm::KokkosComm MPIAdvance::stream-triggering
   )
+  kc_add_unit_test(
+    test.stream.channel
+    stream-triggering
+    NUM_PES
+    FILES test_main.cpp stream-triggering/test_channel.cpp
+    LIBRARIES KokkosComm::KokkosComm MPIAdvance::stream-triggering
+  )
 endif()

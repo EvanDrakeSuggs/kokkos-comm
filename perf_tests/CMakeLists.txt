@@ -43,9 +43,11 @@ option(KokkosComm_ENABLE_MPI_ADVANCE "Support MPI Advance backends." ON)
 option(KokkosComm_ENABLE_STREAMCOMM "Support Stream-Triggered Communication." ON)
 # find MPI ADVANCE Stream Triggering
 if(KokkosComm_ENABLE_MPI_ADVANCE)
-  find_package(stream-triggering REQUIRED)
+  #find_package(stream-triggering REQUIRED)
+  kc_add_perf_test(bench.stream.heat3d MPI NUMP_PES 2 FILES bench_main.cpp stream-triggering/test_heat3d_new.cpp LIBRARIES KokkosComm::KokkosComm MPIAdvance::stream-triggering)
+  kc_add_perf_test(bench.stream.pingpong MPI NUMP_PES 2 FILES bench_main.cpp stream-triggering/test_st_sendrecv.cpp LIBRARIES KokkosComm::KokkosComm MPIAdvance::stream-triggering)
 endif()
-set(KokkosComm_ENABLE_STREAMCOMM KokkosComm_ENABLE_STREAMCOMM_FOUND)
+#set(KokkosComm_ENABLE_STREAMCOMM KokkosComm_ENABLE_STREAMCOMM_FOUND)
 
 if(KokkosComm_ENABLE_STREAMCOMM)
   kc_add_perf_test(bench.mpi.heat3d_st MPI NUM_PES 2 FILES bench_main.cpp mpi/test_heat3d_st.cpp LIBRARIES KokkosComm::KokkosComm)

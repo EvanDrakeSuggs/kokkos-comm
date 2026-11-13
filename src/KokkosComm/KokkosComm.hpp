@@ -55,4 +55,6 @@
 #include "stream-triggering/recv.hpp"
 #include "stream-triggering/send.hpp"
 #include "stream-triggering/context.hpp"
+#include "stream-triggering/request.hpp"
+#include "stream-triggering/stream_channel.hpp"
 #endif

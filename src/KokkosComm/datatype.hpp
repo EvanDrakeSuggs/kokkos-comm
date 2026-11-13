@@ -12,11 +12,17 @@
 #if defined(KOKKOSCOMM_ENABLE_NCCL)
 #include <nccl.h>
 #endif
+#if defined(KOKKOSCOMM_ENABLE_MPI_ADVANCE)
+#include <stream-triggering.h>
+#endif
 
 #include "concepts.hpp"
 #include "mpi/mpi_space.hpp"
 #if defined(KOKKOSCOMM_ENABLE_NCCL)
 #include "nccl/nccl_space.hpp"
+#endif
+#if defined(KOKKOSCOMM_ENABLE_MPI_ADVANCE)
+#include "stream-triggering/stream_space.hpp"
 #endif
 
 namespace KokkosComm {
@@ -143,7 +149,7 @@ constexpr auto nccl_datatype() -> ncclDataType_t {
 /// When `C` is:
 /// - `MpiSpace`, returns the corresponding `MPI_Datatype` type.
 /// - `NcclSpace`, returns the corresponding `ncclDataType_t` type.
-///
+/// - `StreamSpace`, returns the corresponding `MPI_Datatype` type
 /// Non-system data types (i.e. the data types not natively supported by `C`) are not convertible. This notably
 /// includes user-defined types.
 ///
@@ -157,6 +163,11 @@ template <CommunicationSpace C, typename T>
 #if defined(KOKKOSCOMM_ENABLE_NCCL)
   } else if constexpr (std::is_same_v<C, Experimental::NcclSpace>) {
     return Impl::nccl_datatype<std::remove_cv_t<T>>();
+#endif
+#if defined(KOKKOSCOMM_ENABLE_MPI_ADVANCE)
+} else if constexpr (std::is_same_v<C, KokkosComm::Experimental::StreamSpace>) {
+    // TODO: make stream datatype or just use standard mpi datatype for now
+    return Impl::mpi_datatype<std::remove_cv_t<T>>();
 #endif
   } else {
     static_assert(std::is_void_v<C>, "KokkosComm::datatype: conversion not implemented for this communication space");
