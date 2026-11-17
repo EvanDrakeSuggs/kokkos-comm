@@ -18,7 +18,7 @@ class ChannelSendRecv : public testing::Test {
 
 using ScalarTypes = ::testing::Types<int, int64_t, float, double, Kokkos::complex<float>, Kokkos::complex<double>>;
 TYPED_TEST_SUITE(ChannelSendRecv, ScalarTypes);
-  /*
+
 template <typename Scalar>
 void test_channel_hostspace() {
   int rank, size;
@@ -33,8 +33,7 @@ void test_channel_hostspace() {
   const int src_rank  = (rank - 1 + size) % size;  // recv from prev rank
   const int tag       = 42;
 
-  KokkosComm::Experimental::stream::StreamContext ctx;
-  KokkosComm::Experimental::stream::StreamChannel<> channel(dest_rank, src_rank, tag, MPI_COMM_WORLD, ctx.get_mem_info());
+  KokkosComm::Experimental::stream::StreamChannel<> channel(dest_rank, src_rank, tag, MPI_COMM_WORLD);
 
   const int N = 10;
 
@@ -45,8 +44,12 @@ void test_channel_hostspace() {
 
   for (int i = 0; i < N; i++) send_host(i) = static_cast<Scalar>(rank * N + i);
 
-  channel.sendinit(send_host);
-  channel.recvinit(recv_host);
+  if( rank == 0){
+    channel.sendinit(send_host);
+  }
+  else {
+    channel.recvinit(recv_host);
+  }
 
   channel.start();
   channel.wait();
@@ -58,9 +61,11 @@ void test_channel_hostspace() {
       errs++;
     }
   }
-  EXPECT_EQ(errs, 0);
+  if(rank ==1){
+    EXPECT_EQ(errs, 0);
+  }
 }
-  */
+
 template <typename Scalar>
 void test_channel_execspace() {
   int rank, size;
@@ -98,17 +103,13 @@ void test_channel_execspace() {
   else{
     channel.recvinit(recv_dev);
   }
-  //MPIS_Request my_req;
-  //channel.sendrecvinit(send_dev, recv_dev, &my_req);
-  
-  //Kokkos::fence();
-  std::cout << "starting start and wait!" << std::endl;
+
   channel.start();
-  //channel.wait();
+  channel.wait();
 
   Kokkos::deep_copy(recv_host, recv_dev);
-  Kokkos::fence();
-  std::cout << "Finished deep copy!" << std::endl;
+  //Kokkos::fence();
+
   int errs = 0;
   if (rank != 0){
     for (int i = 0; i < N; i++) {
@@ -117,11 +118,10 @@ void test_channel_execspace() {
 	errs++;
       }
     }
-    std::cout << "here is errs: " << errs << std::endl;
     EXPECT_EQ(errs, 0);
   }
 }
-  /*
+
 template <typename Scalar>
 void test_channel_reuse() {
   int rank, size;
@@ -154,26 +154,32 @@ void test_channel_reuse() {
     );
     Kokkos::fence();
 
-    channel.sendinit(send_dev);
-    channel.recvinit(recv_dev);
+    if (rank == 0){
+      channel.sendinit(send_dev);
+    }
+    else{
+      channel.recvinit(recv_dev);
+    }
 
     channel.start();
     channel.wait();
 
     Kokkos::deep_copy(recv_host, recv_dev);
-
-    for (int j = 0; j < N; j++) {
-      const Scalar expected = static_cast<Scalar>(src_rank * N + j);
-      if (recv_host(j) != expected) {
-        errs++;
+    if ( rank == 1){
+      for (int j = 0; j < N; j++) {
+	const Scalar expected = static_cast<Scalar>(src_rank * N + j);
+	if (recv_host(j) != expected) {
+	  errs++;
+	}
       }
+      EXPECT_EQ(errs, 0);
     }
-  }
-  EXPECT_EQ(errs, 0);
-  }*/
 
-  //TYPED_TEST(ChannelSendRecv, 1D_contig_sendrecv_hostspace) { test_channel_hostspace<typename TestFixture::Scalar>(); }
+  }
+}
+
+  TYPED_TEST(ChannelSendRecv, 1D_contig_sendrecv_hostspace) { test_channel_hostspace<typename TestFixture::Scalar>(); }
 TYPED_TEST(ChannelSendRecv, 1D_contig_sendrecv_execspace) { test_channel_execspace<typename TestFixture::Scalar>(); }
-  //TYPED_TEST(ChannelSendRecv, 1D_contig_sendrecv_reuse) { test_channel_reuse<typename TestFixture::Scalar>(); }
+  TYPED_TEST(ChannelSendRecv, 1D_contig_sendrecv_reuse) { test_channel_reuse<typename TestFixture::Scalar>(); }
 
 }  // namespace

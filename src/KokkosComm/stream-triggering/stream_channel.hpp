@@ -203,22 +203,22 @@ class StreamChannel {
     //Kokkos::fence();
     //MPIS_Enqueue_startall( my_queue_, send_reqs_.size(), &send_reqs_[0]);//mpi_reqs.size(), &mpi_reqs[0]);
     MPIS_Enqueue_startall( my_queue_, recv_reqs_.size(), &recv_reqs_[0]);
-    MPIS_Enqueue_waitall( my_queue_ );
-    MPIS_Queue_wait( my_queue_ );
+    //MPIS_Enqueue_waitall( my_queue_ );
+    //MPIS_Queue_wait( my_queue_ );
     Kokkos::Tools::popRegion();
   }
-  /*
+
   void wait() {
     Kokkos::Tools::pushRegion("KokkosComm::StreamChannel::wait");
-    std::vector<Request<StreamSpace>> reqs;
-    reqs.reserve(send_reqs_.size() + recv_reqs_.size());
-    reqs.insert(reqs.end(), std::make_move_iterator(send_reqs_.begin()), std::make_move_iterator(send_reqs_.end()));
-    reqs.insert(reqs.end(), std::make_move_iterator(recv_reqs_.begin()), std::make_move_iterator(recv_reqs_.end()));
+    //std::vector<Request<StreamSpace>> reqs;
+    //reqs.reserve(send_reqs_.size() + recv_reqs_.size());
+    //reqs.insert(reqs.end(), std::make_move_iterator(send_reqs_.begin()), std::make_move_iterator(send_reqs_.end()));
+    //reqs.insert(reqs.end(), std::make_move_iterator(recv_reqs_.begin()), std::make_move_iterator(recv_reqs_.end()));
     //wait_all(reqs);
     MPIS_Enqueue_waitall( my_queue_);
     MPIS_Queue_wait( my_queue_ );
     Kokkos::Tools::popRegion();
-    }*/
+  }
 
  private:
   //std::vector<Request<StreamSpace>> send_reqs_;  // Queue for send requests
