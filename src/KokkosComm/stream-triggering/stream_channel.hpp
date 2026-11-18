@@ -105,9 +105,6 @@ class StreamChannel {
     double_buffer_(other.double_buffer_),
     fine_grain_(other.fine_grain_)
   {
-    //for(int i = 0; i < other.send_reqs_.size(); i++){
-    //  send_reqs.
-    //}
     // clear other
     other.send_reqs_.clear();
     other.recv_reqs_.clear();
@@ -163,12 +160,10 @@ class StreamChannel {
     if( recv_reqs_.empty()){
       recv_reqs_.emplace_back();
     }
-    //MPI_Send_init(
     MPIS_Send_init(
         KokkosComm::data_handle(view), KokkosComm::span(view), datatype<StreamSpace, value_type>(), dest_rank_, tag_,
         comm_, mem_info_,
 	&recv_reqs_.back()
-	//send_reqs_.back().request_ptr()
     );
     MPIS_Match(&recv_reqs_.back(), MPI_STATUS_IGNORE);
     Kokkos::Tools::popRegion();
@@ -186,7 +181,6 @@ class StreamChannel {
         KokkosComm::data_handle(view), KokkosComm::span(view), datatype<StreamSpace, value_type>(), src_rank_, tag_, comm_,
 	mem_info_,
 	&recv_reqs_.back()
-        //recv_reqs_.back().request_ptr()
     );
     MPIS_Match(&recv_reqs_.back(), MPI_STATUS_IGNORE);
     Kokkos::Tools::popRegion();
@@ -196,7 +190,7 @@ class StreamChannel {
   
 
   void startall() {
-    Kokkos::Tools::pushRegion("KokkosComm::StreamChannel::start");
+    Kokkos::Tools::pushRegion("KokkosComm::StreamChannel::startall");
     std::vector<MPIS_Request> mpi_reqs;
     /*for (auto& req : send_reqs_) {
       mpi_reqs.push_back(req.request());
@@ -204,18 +198,16 @@ class StreamChannel {
     for (auto& req : recv_reqs_) {
       mpi_reqs.push_back(req.request());
     }*/
-    //MPIS_Enqueue_startall( my_queue_, send_reqs_.size(), &send_reqs_[0]);//mpi_reqs.size(), &mpi_reqs[0]);
     MPIS_Enqueue_startall( my_queue_, recv_reqs_.size(), &recv_reqs_[0]);
     Kokkos::Tools::popRegion();
   }
 
   void waitall() {
-    Kokkos::Tools::pushRegion("KokkosComm::StreamChannel::wait");
+    Kokkos::Tools::pushRegion("KokkosComm::StreamChannel::waitall");
     //std::vector<Request<StreamSpace>> reqs;
     //reqs.reserve(send_reqs_.size() + recv_reqs_.size());
     //reqs.insert(reqs.end(), std::make_move_iterator(send_reqs_.begin()), std::make_move_iterator(send_reqs_.end()));
     //reqs.insert(reqs.end(), std::make_move_iterator(recv_reqs_.begin()), std::make_move_iterator(recv_reqs_.end()));
-    //wait_all(reqs);
     MPIS_Enqueue_waitall( my_queue_);
     MPIS_Queue_wait( my_queue_ );
     Kokkos::Tools::popRegion();
