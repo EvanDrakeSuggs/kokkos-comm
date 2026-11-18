@@ -51,8 +51,8 @@ void test_channel_hostspace() {
     channel.recvinit(recv_host);
   }
 
-  channel.start();
-  channel.wait();
+  channel.startall();
+  channel.waitall();
 
   int errs = 0;
   for (int i = 0; i < N; i++) {
@@ -95,8 +95,7 @@ void test_channel_execspace() {
   Kokkos::parallel_for(
       "init_send_dev", N, KOKKOS_LAMBDA(int i) { send_dev(i) = static_cast<Scalar>(rank * N + i); }
   );
-  //Kokkos::fence();
-  std::cout << "starting send inits!" << std::endl;
+
   if(rank == 0){
     channel.sendinit(send_dev);
   }
@@ -104,11 +103,10 @@ void test_channel_execspace() {
     channel.recvinit(recv_dev);
   }
 
-  channel.start();
-  channel.wait();
+  channel.startall();
+  channel.waitall();
 
   Kokkos::deep_copy(recv_host, recv_dev);
-  //Kokkos::fence();
 
   int errs = 0;
   if (rank != 0){
@@ -161,8 +159,8 @@ void test_channel_reuse() {
       channel.recvinit(recv_dev);
     }
 
-    channel.start();
-    channel.wait();
+    channel.startall();
+    channel.waitall();
 
     Kokkos::deep_copy(recv_host, recv_dev);
     if ( rank == 1){

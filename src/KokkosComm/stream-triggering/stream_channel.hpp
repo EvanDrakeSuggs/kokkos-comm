@@ -154,6 +154,7 @@ class StreamChannel {
     }
   
   // Send initialization - dynamically adds a send request to the send queue
+  // TODO make send and recv return request object!
   template <class SendView>
   void sendinit(SendView view) {
     Kokkos::Tools::pushRegion("KokkosComm::StreamChannel::sendinit");
@@ -191,7 +192,10 @@ class StreamChannel {
     Kokkos::Tools::popRegion();
   }
 
-  void start() {
+  // make a start that works on specific requests
+  
+
+  void startall() {
     Kokkos::Tools::pushRegion("KokkosComm::StreamChannel::start");
     std::vector<MPIS_Request> mpi_reqs;
     /*for (auto& req : send_reqs_) {
@@ -200,15 +204,12 @@ class StreamChannel {
     for (auto& req : recv_reqs_) {
       mpi_reqs.push_back(req.request());
     }*/
-    //Kokkos::fence();
     //MPIS_Enqueue_startall( my_queue_, send_reqs_.size(), &send_reqs_[0]);//mpi_reqs.size(), &mpi_reqs[0]);
     MPIS_Enqueue_startall( my_queue_, recv_reqs_.size(), &recv_reqs_[0]);
-    //MPIS_Enqueue_waitall( my_queue_ );
-    //MPIS_Queue_wait( my_queue_ );
     Kokkos::Tools::popRegion();
   }
 
-  void wait() {
+  void waitall() {
     Kokkos::Tools::pushRegion("KokkosComm::StreamChannel::wait");
     //std::vector<Request<StreamSpace>> reqs;
     //reqs.reserve(send_reqs_.size() + recv_reqs_.size());
