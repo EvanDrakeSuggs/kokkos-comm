@@ -153,25 +153,26 @@ class StreamChannel {
   // Send initialization - dynamically adds a send request to the send queue
   // TODO make send and recv return request object!
   template <class SendView>
-  void sendinit(SendView view) {
+  auto sendinit(SendView view) {
     Kokkos::Tools::pushRegion("KokkosComm::StreamChannel::sendinit");
     using value_type = typename SendView::value_type;
     // Add a new request to the send_reqs_ vector
-    if( recv_reqs_.empty()){
-      recv_reqs_.emplace_back();
+    if( send_reqs_.empty()){
+      send_reqs_.emplace_back();
     }
     MPIS_Send_init(
         KokkosComm::data_handle(view), KokkosComm::span(view), datatype<StreamSpace, value_type>(), dest_rank_, tag_,
         comm_, mem_info_,
-	&recv_reqs_.back()
+	&send_reqs_.back()
     );
-    MPIS_Match(&recv_reqs_.back(), MPI_STATUS_IGNORE);
+    MPIS_Match(&send_reqs_.back(), MPI_STATUS_IGNORE);
     Kokkos::Tools::popRegion();
+    return &send_reqs_.back();
   }
 
   // Receive initialization - dynamically adds a receive request to the recv queue
   template <class RecvView>
-  void recvinit(RecvView view) {
+  auto recvinit(RecvView view) {
     Kokkos::Tools::pushRegion("KokkosComm::StreamChannel::recvinit");
     using value_type = typename RecvView::value_type;
     if( recv_reqs_.empty() ){
@@ -184,12 +185,28 @@ class StreamChannel {
     );
     MPIS_Match(&recv_reqs_.back(), MPI_STATUS_IGNORE);
     Kokkos::Tools::popRegion();
+    return &recv_reqs_.back();
   }
 
   // make a start that works on specific requests
-  
+  int start( MPIS_Request* my_req ){
+    Kokkos::Tools::pushRegion("KokkosComm::StreamChannel::start");
+    MPIS_Enqueue_start( my_queue_, my_req);
+    Kokkos::Tools::popRegion();
+    return MPIS_SUCCESS;
+  }
 
-  void startall() {
+  // make a start that works on specific requests
+  int start( int len, MPIS_Request my_req[] ){
+    Kokkos::Tools::pushRegion("KokkosComm::StreamChannel::start");
+    for(int i = 0; i < len; ++i){
+      MPIS_Enqueue_start( my_queue_, &my_req[i]);
+    }
+    Kokkos::Tools::popRegion();
+    return MPIS_SUCCESS;
+  } 
+
+  int startall() {
     Kokkos::Tools::pushRegion("KokkosComm::StreamChannel::startall");
     std::vector<MPIS_Request> mpi_reqs;
     /*for (auto& req : send_reqs_) {
@@ -199,10 +216,31 @@ class StreamChannel {
       mpi_reqs.push_back(req.request());
     }*/
     MPIS_Enqueue_startall( my_queue_, recv_reqs_.size(), &recv_reqs_[0]);
+    MPIS_Enqueue_startall( my_queue_, send_reqs_.size(), &send_reqs_[0]);
     Kokkos::Tools::popRegion();
+    return MPIS_SUCCESS;
   }
 
-  void waitall() {
+  // make a wait that works on specific requests
+  int wait( MPIS_Request* my_req){
+    Kokkos::Tools::pushRegion("KokkosComm::StreamChannel::wait");
+    MPIS_Wait(my_req, MPI_STATUS_IGNORE);
+    MPIS_Queue_wait( my_queue_ );
+    Kokkos::Tools::popRegion();
+    return MPIS_SUCCESS;
+  }
+
+  int wait( int len, MPIS_Request my_req[]){
+    Kokkos::Tools::pushRegion("KokkosComm::StreamChannel::wait");
+    for(int i = 0; i < len; ++i){
+      MPIS_Wait(&my_req[i], MPI_STATUS_IGNORE);
+    }
+    MPIS_Queue_wait( my_queue_ );
+    Kokkos::Tools::popRegion();
+    return MPIS_SUCCESS;
+  }  
+  
+  int waitall() {
     Kokkos::Tools::pushRegion("KokkosComm::StreamChannel::waitall");
     //std::vector<Request<StreamSpace>> reqs;
     //reqs.reserve(send_reqs_.size() + recv_reqs_.size());
@@ -211,6 +249,7 @@ class StreamChannel {
     MPIS_Enqueue_waitall( my_queue_);
     MPIS_Queue_wait( my_queue_ );
     Kokkos::Tools::popRegion();
+    return MPIS_SUCCESS;
   }
 
  private:
